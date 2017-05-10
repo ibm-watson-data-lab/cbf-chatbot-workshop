@@ -200,7 +200,7 @@ class HealthBot {
                 // for an action (for example, return a list of recipes) 
                 // In other cases we'll just return the response configured in the Watson Conversation dialog
                 const action = conversationResponse.context.action;
-                if (action == "findDoctorLocation") {
+                if (action == "findDoctorByLocation") {
                     return this.handleFindDoctorLocationMessage(conversationResponse);
                 }
                 else {
@@ -240,6 +240,13 @@ class HealthBot {
      * @param {Object} conversationResponse - The response from Watson Conversation
      */
     handleFindDoctorLocationMessage(conversationResponse) {
+        // 
+        let query = '';
+        if (conversationResponse.context.specialty) {
+            query += conversationResponse.context.specialty + ' ';
+        }
+        query += 'Doctor';
+        //
         let location = '';
         for (let i=0; i<conversationResponse.entities.length; i++) {
             if (conversationResponse.entities[0].entity == 'sys-location') {
@@ -250,7 +257,6 @@ class HealthBot {
             }
         }
         return new Promise((resolve, reject) => {
-            let query = 'doctor';
             let params = {
                 "near": location,
                 "radius": 5000
@@ -262,12 +268,12 @@ class HealthBot {
                     reply = 'Sorry, I couldn\'t find any doctors near you.';
                 }
                 else {
-                    console.log(JSON.stringify(venues.response.venues,null,2));
+                    reply = 'Here is what I found:\n';
                     for (var i=0; i<venues.response.venues.length; i++) {
-                        if (reply.length == 0) {
+                        if (reply.length > 0) {
                             reply += '\n';
                         }
-                        reply += venues.response.venues[i].name;
+                        reply += '* ' + venues.response.venues[i].name;
                     }
                 }
                 resolve(reply);
