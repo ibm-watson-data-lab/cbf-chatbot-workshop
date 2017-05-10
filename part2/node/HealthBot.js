@@ -14,10 +14,8 @@ class HealthBot {
      * @param {string} conversationWorkspaceId - The Watson Conversation workspace ID
      * @param {string} foursquareClientId - Foursquare Client ID
      * @param {string} foursquareClientSecret - Foursquare Client Secret
-     * @param {string} slackToken - Token associated with a Slackbot (optional)
-     * @param {string} httpServer - HTTP server for hosting websocker server
      */
-    constructor(userStore, dialogStore, conversationUsername, conversationPassword, conversationWorkspaceId, foursquareClientId, foursquareClientSecret, slackToken, httpServer) {
+    constructor(userStore, dialogStore, conversationUsername, conversationPassword, conversationWorkspaceId, foursquareClientId, foursquareClientSecret) {
         this.userStore = userStore;
         this.dialogStore = dialogStore;
         this.dialogQueue = [];
@@ -201,7 +199,7 @@ class HealthBot {
                 // In other cases we'll just return the response configured in the Watson Conversation dialog
                 const action = conversationResponse.context.action;
                 if (action == "findDoctorByLocation") {
-                    return this.handleFindDoctorLocationMessage(conversationResponse);
+                    return this.handleFindDoctorByLocationMessage(conversationResponse);
                 }
                 else {
                     return this.handleGenericMessage(conversationResponse);
@@ -239,8 +237,11 @@ class HealthBot {
      * Returns the reply that was configured in the Watson Conversation dialog
      * @param {Object} conversationResponse - The response from Watson Conversation
      */
-    handleFindDoctorLocationMessage(conversationResponse) {
-        // 
+    handleFindDoctorByLocationMessage(conversationResponse) {
+        if (! this.foursquareClient) {
+		return Promise.resolve('Please configure Foursquare.');
+	}
+	// 
         let query = '';
         if (conversationResponse.context.specialty) {
             query += conversationResponse.context.specialty + ' ';
