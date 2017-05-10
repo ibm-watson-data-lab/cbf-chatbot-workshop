@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/showdown-1.6.4.min.js"></script>
+    <script src="js/require-2.3.3.min.js"></script>
+    <script>
+        require.config({
+            paths: {
+                'vs': 'js/vs',
+                'vue': 'js/vue-2.1.8.min'
+            }
+        });
+    </script>
+    <script src="js/editor.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        var webSocketProtocol = '<%= webSocketProtocol %>';
+    </script>
+</head>
+<body>
+
+<div id="app" class="container-fluid">
+    <div class="row" style="height: 100%">
+        <div class="chat-outer-container col-md-7 col-sm-12">
+            <div class="chat-inner-container">
+                <div id="chat-message-container">
+                    <div v-for="msg in messages" v-bind:class="[msg.isBot ? 'chat-msg-body-bot' : 'chat-msg-body-user']">
+                        <b>{{ msg.user }}</b>:
+                        <div v-html="msg.msg"></div>
+                    </div>
+                </div>
+                <hr />
+                <div class="chat-form-container row">
+                    <div class="col-10" style="padding-right: 5px; padding-left: 65px;">
+                        <input id="message" class="form-control" aria-label="Enter your message..." class="input_text" type="text" autocomplete="off" name="message" placeholder="Enter your message..." v-model="message" v-on:keyup.13="submitMessage">
+                    </div>
+                    <div class="col-2" style="padding-left: 5px">
+                        <button id="sendmessage" class="btn btn-default" type="submit" class="button_primary" v-on:click="submitMessage">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="editor-container col-sm-5 hidden-sm-down">
+            <div id="editor"></div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
