@@ -1,8 +1,7 @@
 'use strict';
 
 const ConversationV1 = require('watson-developer-cloud/conversation/v1');
-const prompt = require('prompt');
- 
+
 class MyBot {
 
     /**
@@ -20,33 +19,6 @@ class MyBot {
         });
         this.conversationWorkspaceId = conversationWorkspaceId;
         this.conversationContext = null;
-    }
-
-     /**
-     * Runs the bot.
-     */
-    run() {
-        prompt.start();
-        this.promptUser();
-    }
-
-    /**
-     * Prompts the user for the next message.
-     */
-    promptUser() {
-        prompt.get([{name: 'message', message: 'Enter your message'}], (err, result) => {
-            if (err || result.message == 'quit') {
-                process.exit();
-            }
-            // The user's message is in result.message
-            // Here we pass it to the processMessage function which will ultimately return a Promise
-            // that when fulfilled contains the reply to send to the user.
-            this.processMessage(result.message)
-                .then((reply) => {
-                    console.log('MyBot: ' + reply);
-                    this.promptUser();
-                });
-        });
     }
 
     /**
