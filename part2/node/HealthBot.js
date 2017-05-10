@@ -22,8 +22,7 @@ class HealthBot {
         this.conversationService = new ConversationV1({
             username: conversationUsername,
             password: conversationPassword,
-            version_date: '2017-04-21',
-            minimum_confidence: 0.50 // (Optional) Default is 0.75
+            version_date: '2017-04-21'
         });
         this.conversationWorkspaceId = conversationWorkspaceId;
         if (foursquareClientId && foursquareClientSecret) {
@@ -39,83 +38,6 @@ class HealthBot {
             this.userStore.init(),
             this.dialogStore.init()
         ]);
-    }
-
-    /**
-     * 
-     * @param {string} messageSender - The ID of the sender
-     */
-    getOrCreateUserInMemory(messageSender) {
-        return new Promise((resolve, reject) => {
-            if (! this.userMap) {
-                this.userMap = {};
-            }
-            var user = this.userMap[messageSender];
-            if (!user) {
-                user = {
-                    _id: messageSender
-                };
-                this.userMap[messageSender] = user;
-                console.log(`Created new user with ID ${user._id}.`);
-            }
-            else {
-                console.log(`User with ID ${user._id} already exists.`);
-            }
-            resolve(user);
-        });
-    }
-
-    /**
-     * Retrieves ID of the user doc in the Cloudant database associated
-     * with the current user interacting with the bot
-     * First checks if the user is stored in Cloudant
-     * If not, creates the user in Cloudant
-     * @param {string} messageSender - The ID of the user from the messaging platform (Slack ID, or unique ID associated with the WebSocket client) 
-     */
-    getOrCreateUserInCloudant(messageSender) {
-        return this.userStore.addUser(messageSender);
-    }
-
-    getOrCreateUser(messageSender) {
-        return this.getOrCreateUserInCloudant(messageSender);
-    }
-
-    updateUserWithWatsonConversationContextInMemory(user, context) {
-        return new Promise((resolve, reject) => {
-            user.conversationContext = context;
-            resolve(user);
-        });
-    }
-
-    updateUserWithWatsonConversationContextInCloudant(user, context) {
-        return this.userStore.updateUser(user, context);
-    }
-
-    updateUserWithWatsonConversationContext(user, context) {
-        return this.updateUserWithWatsonConversationContextInCloudant(user, context);
-    }
-
-    /**
-     * Retrieves the ID of the active conversation doc in the Cloudant conversation log database for the current user.
-     * If this is the start of a new converation then a new document is created in Cloudant,
-     * and the ID of the document is associated with the Watson Conversation context.
-     * @param {string} user - The active user
-     * @param {Object} conversationResponse - The response from Watson Conversation
-     * @returns {Promise.<string|error>} - The ID of the active conversation doc in Cloudant if fulfilled, or an error if rejected 
-     */
-    getOrCreateActiveConversationId(user, conversationResponse) {
-        const newConversation = conversationResponse.context.newConversation;
-        if (newConversation) {
-            conversationResponse.context.newConversation = false;
-            return this.dialogStore.addConversation(user._id)
-                .then((conversationDoc) => {
-                    conversationResponse.context.conversationDocId = conversationDoc.id;
-                    return Promise.resolve(conversationDoc.id);
-                });
-        }
-        else {
-            return Promise.resolve(conversationResponse.context.conversationDocId);
-        }
     }
 
     /**
@@ -239,9 +161,9 @@ class HealthBot {
      */
     handleFindDoctorByLocationMessage(conversationResponse) {
         if (! this.foursquareClient) {
-		return Promise.resolve('Please configure Foursquare.');
-	}
-	// 
+            return Promise.resolve('Please configure Foursquare.');
+        }
+        // 
         let query = '';
         if (conversationResponse.context.specialty) {
             query += conversationResponse.context.specialty + ' ';
@@ -259,6 +181,7 @@ class HealthBot {
         }
         return new Promise((resolve, reject) => {
             let params = {
+                "query": query,
                 "near": location,
                 "radius": 5000
             };
@@ -280,6 +203,83 @@ class HealthBot {
                 resolve(reply);
             });
         });
+    }
+
+    /**
+     * 
+     * @param {string} messageSender - The ID of the sender
+     */
+    getOrCreateUserInMemory(messageSender) {
+        return new Promise((resolve, reject) => {
+            if (! this.userMap) {
+                this.userMap = {};
+            }
+            var user = this.userMap[messageSender];
+            if (!user) {
+                user = {
+                    _id: messageSender
+                };
+                this.userMap[messageSender] = user;
+                console.log(`Created new user with ID ${user._id}.`);
+            }
+            else {
+                console.log(`User with ID ${user._id} already exists.`);
+            }
+            resolve(user);
+        });
+    }
+
+    /**
+     * Retrieves ID of the user doc in the Cloudant database associated
+     * with the current user interacting with the bot
+     * First checks if the user is stored in Cloudant
+     * If not, creates the user in Cloudant
+     * @param {string} messageSender - The ID of the user from the messaging platform (Slack ID, or unique ID associated with the WebSocket client) 
+     */
+    getOrCreateUserInCloudant(messageSender) {
+        return this.userStore.addUser(messageSender);
+    }
+
+    getOrCreateUser(messageSender) {
+        return this.getOrCreateUserInCloudant(messageSender);
+    }
+
+    updateUserWithWatsonConversationContextInMemory(user, context) {
+        return new Promise((resolve, reject) => {
+            user.conversationContext = context;
+            resolve(user);
+        });
+    }
+
+    updateUserWithWatsonConversationContextInCloudant(user, context) {
+        return this.userStore.updateUser(user, context);
+    }
+
+    updateUserWithWatsonConversationContext(user, context) {
+        return this.updateUserWithWatsonConversationContextInCloudant(user, context);
+    }
+
+    /**
+     * Retrieves the ID of the active conversation doc in the Cloudant conversation log database for the current user.
+     * If this is the start of a new converation then a new document is created in Cloudant,
+     * and the ID of the document is associated with the Watson Conversation context.
+     * @param {string} user - The active user
+     * @param {Object} conversationResponse - The response from Watson Conversation
+     * @returns {Promise.<string|error>} - The ID of the active conversation doc in Cloudant if fulfilled, or an error if rejected 
+     */
+    getOrCreateActiveConversationId(user, conversationResponse) {
+        const newConversation = conversationResponse.context.newConversation;
+        if (newConversation) {
+            conversationResponse.context.newConversation = false;
+            return this.dialogStore.addConversation(user._id)
+                .then((conversationDoc) => {
+                    conversationResponse.context.conversationDocId = conversationDoc.id;
+                    return Promise.resolve(conversationDoc.id);
+                });
+        }
+        else {
+            return Promise.resolve(conversationResponse.context.conversationDocId);
+        }
     }
 
     /**

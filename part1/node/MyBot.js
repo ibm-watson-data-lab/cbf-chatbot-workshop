@@ -14,8 +14,7 @@ class MyBot {
         this.conversationService = new ConversationV1({
             username: conversationUsername,
             password: conversationPassword,
-            version_date: '2017-04-21',
-            minimum_confidence: 0.50 // (Optional) Default is 0.75
+            version_date: '2017-04-21'
         });
         this.conversationWorkspaceId = conversationWorkspaceId;
         this.conversationContext = null;
@@ -100,16 +99,6 @@ class MyBot {
     }
 
     /**
-     * Returns a custom response to the user.
-     * @param {object} conversationResponse - The response from Watson Conversation
-     * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
-     */
-    handleXXXMessage(conversationResponse) {
-        let reply = 'TBD';
-        return Promise.resolve(reply);
-    }
-
-    /**
      * Handles a generic message from Watson Conversation, one that requires no additional steps.
      * Returns the reply that was configured in the Watson Conversation dialog.
      * @param {object} conversationResponse - The response from Watson Conversation
@@ -120,6 +109,18 @@ class MyBot {
         for (let i = 0; i < conversationResponse.output.text.length; i++) {
             reply += conversationResponse.output.text[i] + '\n';
         }
+        return Promise.resolve(reply);
+    }
+
+    /**
+     * Returns a custom response to the user.
+     * @param {object} conversationResponse - The response from Watson Conversation
+     * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
+     */
+    handleXXXMessage(conversationResponse) {
+        // entity = conversationResponse.entities[0].value
+        // context var = conversationResponse.context.var
+        let reply = 'TBD';
         return Promise.resolve(reply);
     }
 }
