@@ -6,27 +6,12 @@ const express = require('express');
 const CloudantDialogStore = require('./CloudantDialogStore');
 const CloudantUserStore = require('./CloudantUserStore');
 const HealthBot = require('./HealthBot');
+const SlackBotController = require('./SlackBotController');
+const WebSocketBotController = require('./WebSocketBotController');
 
 const appEnv = cfenv.getAppEnv();
 const app = express();
 const http = require('http').Server(app);
-
-(function() {
-    // load environment variables
-    dotenv.config();
-    let healthBot = new HealthBot(
-        new CloudantUserStore(process.env.CLOUDANT_URL, process.env.CLOUDANT_USER_DB_NAME),
-        new CloudantDialogStore(process.env.CLOUDANT_URL, process.env.CLOUDANT_DIALOG_DB_NAME),
-        process.env.CONVERSATION_USERNAME,
-        process.env.CONVERSATION_PASSWORD,
-        process.env.CONVERSATION_WORKSPACE_ID,
-        process.env.FOURSQUARE_CLIENT_ID,
-        process.env.FOURSQUARE_CLIENT_SECRET,
-        process.env.SLACK_BOT_TOKEN,
-        http
-    );
-    healthBot.run();
-})();
 
 app.use(express.static(__dirname + '/public'));
 
@@ -44,4 +29,32 @@ app.get('/', function(req, res) {
 // start server on the specified port and binding host
 http.listen(appEnv.port, appEnv.bind, () => {
     console.log("server starting on " + appEnv.url);
+
+    // load environment variables and create an instance of the HealthBot
+    dotenv.config();
+    let healthBot = new HealthBot(
+        new CloudantUserStore(process.env.CLOUDANT_URL, process.env.CLOUDANT_USER_DB_NAME),
+        new CloudantDialogStore(process.env.CLOUDANT_URL, process.env.CLOUDANT_DIALOG_DB_NAME),
+        process.env.CONVERSATION_USERNAME,
+        process.env.CONVERSATION_PASSWORD,
+        process.env.CONVERSATION_WORKSPACE_ID,
+        process.env.FOURSQUARE_CLIENT_ID,
+        process.env.FOURSQUARE_CLIENT_SECRET
+    );
+    // initialize the HealthBot
+    healthBot.init()
+        .then(() => {
+            let webSocketBotController = new WebSocketBotController(healthBot, http);
+            webSocketBotController.start();
+            // if a slack token is defined then create an instance of SlackBotController
+            let slackToken = process.env.SLACK_TOKEN;
+            if (slackToken) {
+                slackBotController = new SlackBotControlller(healthBot, slackToken);
+                slackBotController.start();
+            }
+        })
+        .catch((error) => {
+            console.log(`Error: ${error}`);
+            process.exit();
+        });
 });

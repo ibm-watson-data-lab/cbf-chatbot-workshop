@@ -1,8 +1,6 @@
 'use strict';
 
 const ConversationV1 = require('watson-developer-cloud/conversation/v1');
-const SlackBot = require('slackbots');
-const WebSocketBotServer = require('./WebSocketBotServer');
 const Foursquare = require('foursquarevenues');
  
 class HealthBot {
@@ -33,102 +31,16 @@ class HealthBot {
         if (foursquareClientId && foursquareClientSecret) {
             this.foursquareClient = Foursquare(foursquareClientId, foursquareClientSecret);
         }
-        this.slackToken = slackToken;
-        this.httpServer = httpServer;
     }
 
      /**
-     * Starts the bot, initializing the necessary databases, botkit controllers, etc.
+     * Starts the bot, initializing the necessary databases, bot controllers, etc.
      */
-    run() {
-        Promise.all([
+    init() {
+        return Promise.all([
             this.userStore.init(),
             this.dialogStore.init()
-        ])
-            .then(() => {
-                if (this.slackToken) {
-                    this.initSlackBot();
-                }
-                if (this.httpServer) {
-                    this.initWebSocketBot();
-                }
-            })
-            .catch((error) => {
-                console.log(`Error: ${error}`);
-                process.exit();
-            });
-    }
-
-    /**
-     * Initializes the Slack Bot
-     */
-    initSlackBot() {
-        this.slackBot = new SlackBot({
-            token: this.slackToken,
-            name: 'bot'
-        });
-        this.slackBot.on('start', () => {
-            console.log('Slackbot running.')
-        });
-        this.slackBot.on('message', (data) => {
-            if (data.type == 'message' && data.channel.startsWith('D')) {
-                if (!data.bot_id) {
-                    let messageSender = data.user;
-                    let message = data.text;
-                    this.processMessage(messageSender, message)
-                        .then((reply) => {
-                            this.slackBot.postMessage(data.channel, reply.text, {});
-                        });
-                }
-                else {
-                    // ignore messages from the bot (messages we sent)
-                }
-            }
-        });       
-    }
-
-    /**
-     * Initializes the bot that will be used for clients connecting via WebSockets.
-     */
-    initWebSocketBot() {
-        this.webSocketBotServer = new WebSocketBotServer();
-        this.webSocketBotServer.start(this.httpServer);
-        this.webSocketBotServer.on('start', () => {
-            console.log('WebSocketBotServer running.')
-        });
-        this.webSocketBotServer.on('connected', (client) => {
-            client.on('disconnect', (message) => {
-                // Clean up, if necessary
-            });
-            client.on('message', (message) => {
-                this.onWebSocketClientMessage(client, message)
-            });
-        });
-    }
-
-    /**
-     * This function is called when a new message is recieved from a client
-     * connecting vie Websockets.
-     * @param {object} client - Instance of WebSocketBotClient
-     * @param {string} msg - The message entered by the user
-     */
-    onWebSocketClientMessage(client, msg) {
-        if (msg.type == 'ping') {
-            client.send({type: 'ping'});
-        }
-        else {
-            let messageSender = msg.userId;
-            let message = msg.text;
-            this.processMessage(messageSender, message)
-                .then((reply) => {
-                    var replyMsg = {
-                        type: 'msg',
-                        text: reply.text,
-                        watsonData: reply.conversationResponse
-                    };
-                    client.send(replyMsg);
-                });
-        }
+        ]);
     }
 
     /**
