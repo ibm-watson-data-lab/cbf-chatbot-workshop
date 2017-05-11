@@ -47,9 +47,9 @@ http.listen(appEnv.port, appEnv.bind, () => {
             let webSocketBotController = new WebSocketBotController(healthBot, http);
             webSocketBotController.start();
             // if a slack token is defined then create an instance of SlackBotController
-            let slackToken = process.env.SLACK_TOKEN;
+            let slackToken = process.env.SLACK_BOT_TOKEN;
             if (slackToken) {
-                slackBotController = new SlackBotControlller(healthBot, slackToken);
+                let slackBotController = new SlackBotController(healthBot, slackToken);
                 slackBotController.start();
             }
         })
