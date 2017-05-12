@@ -3,8 +3,7 @@
 const cloudant = require('cloudant');
 
 /**
- * This class is used to create and initialize the Cloudant database required
- * to store Watson Conversation state.
+ * This class is used to store users and their state (Watson Conversation context) in Cloudant.
  */
 class CloudantUserStore {
 
@@ -25,7 +24,7 @@ class CloudantUserStore {
 
     /**
      * Creates and initializes the database.
-     * @returns {Promise.<TResult>}
+     * @returns {Promise.<null|error>} - Null if fulfilled, or an error if rejected 
      */
     init() {
         console.log('Getting user database...');
@@ -54,7 +53,7 @@ class CloudantUserStore {
     /**
      * Adds a new user to Cloudant if a user with the specified ID does not already exist.
      * @param userId - The ID of the user (Slack ID, or unique ID associated with the WebSocket client)
-     * @returns {Promise.<TResult>}
+     * @returns {Promise.<object|error>} - The user doc stored in Cloudant if fulfilled, or an error if rejected 
      */
     addUser(userId) {
         return this.db.get(userId)
@@ -80,7 +79,7 @@ class CloudantUserStore {
     /**
      * Adds a new user to Cloudant if a user with the specified ID does not already exist.
      * @param userId - The ID of the user (Slack ID, or unique ID associated with the WebSocket client)
-     * @returns {Promise.<TResult>}
+     * @returns {Promise.<TResult>} - The udpated user doc stored in Cloudant if fulfilled, or an error if rejected 
      */
     updateUser(user, context) {
         return this.db.get(user._id)
@@ -88,12 +87,11 @@ class CloudantUserStore {
                 let doc = userDoc;
                 doc.conversationContext = context;
                 return this.db.insert(doc)
-                        .then((body) => {
-                            doc._id = body.id;
-                            doc._rev = body.rev;
-                            doc.context = body.context;
-                            return Promise.resolve(doc);
-                        });
+                    .then((body) => {
+                        doc._id = body.id;
+                        doc._rev = body.rev;
+                        return Promise.resolve(doc);
+                    });
             });
     }
 }

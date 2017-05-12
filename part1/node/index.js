@@ -5,7 +5,7 @@ const prompt = require('prompt');
 
 const MyBot = require('./MyBot');
 
-// load environment variables
+// load environment variables and create an instance of MyBot
 dotenv.config();
 const myBot = new MyBot(
     process.env.CONVERSATION_USERNAME,
@@ -21,8 +21,8 @@ function promptUser() {
         if (err || result.message == 'quit') {
             process.exit();
         }
-        // The user's message is in result.message
-        // Here we pass it to the processMessage function which will ultimately return a Promise
+        // The message the user typed at the prompt is in result.message.
+        // Here we pass it to the processMessage function in MyBot which will ultimately return a Promise
         // that when fulfilled contains the reply to send to the user.
         myBot.processMessage(result.message)
             .then((reply) => {

@@ -7,11 +7,18 @@ const EventEmitter = require('events');
 
 class WebSocketBotServer extends EventEmitter {
 
+    /**
+     * Creates a new instance of WebSocketBotServer.
+     */
     constructor() {
         super();
         this.clients = [];
     }
 
+    /**
+     * Starts the WebSocketServer.
+     * @param httpServer - The httpServer to bind to.
+     */
     start(httpServer) {
         this.webSocketServer = new WebSocketServer({httpServer: httpServer, autoAcceptConnections: false});
         this.webSocketServer.on('request', (request) => {
@@ -19,6 +26,10 @@ class WebSocketBotServer extends EventEmitter {
         });
     }
 
+    /**
+     * This function is called when a new client is connected to the WebSocketServer.
+     * @param {object} request - The connection request
+     */
     onWebSocketConnection(request) {
         console.log(`${new Date()} WebSocket connection accepted.`);
         const connection = request.accept(null, request.origin);

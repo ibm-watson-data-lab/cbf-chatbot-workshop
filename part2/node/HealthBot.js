@@ -12,8 +12,8 @@ class HealthBot {
      * @param {string} conversationUsername - The Watson Conversation username
      * @param {string} conversationPassword - The Watson Converation password
      * @param {string} conversationWorkspaceId - The Watson Conversation workspace ID
-     * @param {string} foursquareClientId - Foursquare Client ID
-     * @param {string} foursquareClientSecret - Foursquare Client Secret
+     * @param {string} foursquareClientId - The Foursquare Client ID
+     * @param {string} foursquareClientSecret - The Foursquare Client Secret
      */
     constructor(userStore, dialogStore, conversationUsername, conversationPassword, conversationWorkspaceId, foursquareClientId, foursquareClientSecret) {
         this.userStore = userStore;
@@ -31,7 +31,7 @@ class HealthBot {
     }
 
      /**
-     * Starts the bot, initializing the necessary databases, bot controllers, etc.
+     * Initializes the bot, including the required datastores.
      */
     init() {
         return Promise.all([
@@ -41,7 +41,7 @@ class HealthBot {
     }
 
     /**
-     * Process the message entered by the user
+     * Process the message entered by the user.
      * @param {string} message - The message entered by the user
      * @returns {Promise.<string|Error>} - The reply to be sent to the user if fulfilled, or an error if rejected
      */
@@ -77,7 +77,7 @@ class HealthBot {
      * along with the active Watson Conversation context that is used to keep track of the conversation.
      * @param {string} message - The message entered by the user
      * @param {object} conversationContext - The active Watson Conversation context
-     * @returns {Proimse.<object|error>} - The response from Watson Conversation if fulfilled, or an error if rejected
+     * @returns {Promise.<object|error>} - The response from Watson Conversation if fulfilled, or an error if rejected
      */
     sendRequestToWatsonConversation(message, conversationContext) {
         return new Promise((resolve, reject) => {
@@ -98,39 +98,37 @@ class HealthBot {
     }
     
     /**
-     * Takes the initial response from Watson Conversation, performs any
-     * additional steps that may be required, and updates the response to include
-     * the reply that should be sent to the user.
+     * Takes the response from Watson Conversation, performs any additional steps
+     * that may be required, and returns the reply that should be sent to the user.
      * @param {string} message - The message sent by the user
-     * @param {string} user - The user...
-     * @param {Object} conversationResponse - The initial response from Watson Conversation
+     * @param {object} user - The active user stored in Cloudant
+     * @param {object} conversationResponse - The response from Watson Conversation
+     * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
      */
     handleResponseFromWatsonConversation(message, user, conversationResponse) {
-        // getConversationDocId will retrieve the current conversation
-        // for the current user from our Cloudant log database
-        // A new conversation doc is created anytime a new conversation is started
-        // It will also add the conversationDocId to the Watson Conversation context
-        // which is managed by Botkit and is available to us anytime a new message is sent by the user
+        // getOrCreateActiveConversationId will retrieve the active conversation
+        // for the current user from our Cloudant log database.
+        // A new conversation doc is created anytime a new conversation is started.
+        // The conversationDocId is store in the Watson Conversation context,
+        // so we can access it every time a new message is received from a user.
         return this.getOrCreateActiveConversationId(user, conversationResponse)
             .then(() => {
-                // Here we handle the action
                 // Every dialog in our workspace has been configured with a custom "action"
-                // that is sent in the Watson Conversation context
+                // that is available in the Watson Conversation context.
                 // In some cases we need to take special steps and return a customized response
-                // for an action (for example, return a list of recipes) 
-                // In other cases we'll just return the response configured in the Watson Conversation dialog
+                // for an action - for example, lookup and return a list of doctors (handleFindDoctorByLocationMessage). 
+                // In other cases we'll just return the response configured in the Watson Conversation dialog (handleDefaultMessage).
                 const action = conversationResponse.context.action;
                 if (action == "findDoctorByLocation") {
                     return this.handleFindDoctorByLocationMessage(conversationResponse);
                 }
                 else {
-                    return this.handleGenericMessage(conversationResponse);
+                    return this.handleDefaultMessage(conversationResponse);
                 }
             })
             .then((reply) => {
-                // Finally, we log every action performed as part of this unique conversation
-                // in our Cloudant dialog database
-                // Then we return the reply
+                // Finally, we log every action performed as part of the active conversation
+                // in our Cloudant dialog database and return the reply to be sent to the user.
                 this.logDialog(
                     conversationResponse.context.conversationDocId,
                     conversationResponse.context.action,
@@ -142,11 +140,12 @@ class HealthBot {
     }
 
     /**
-     * Handles a generic message from Watson Conversation, one that requires no additional steps
-     * Returns the reply that was configured in the Watson Conversation dialog
-     * @param {Object} conversationResponse - The response from Watson Conversation
+     * The default handler for any message from Watson Conversation that requires no additional steps.
+     * Returns the reply that was configured in the Watson Conversation dialog.
+     * @param {object} conversationResponse - The response from Watson Conversation
+     * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
      */
-    handleGenericMessage(conversationResponse) {
+    handleDefaultMessage(conversationResponse) {
         let reply = '';
         for (let i = 0; i < conversationResponse.output.text.length; i++) {
             reply += conversationResponse.output.text[i] + '\n';
@@ -155,21 +154,23 @@ class HealthBot {
     }
 
     /**
-     * Handles a generic message from Watson Conversation, one that requires no additional steps
-     * Returns the reply that was configured in the Watson Conversation dialog
-     * @param {Object} conversationResponse - The response from Watson Conversation
+     * The handler for the findDoctorByLocation action defined in the Watson Conversation dialog.
+     * Queries Foursquare for doctors based on the speciality identified by Watson Conversation
+     * and the location entered by the user.
+     * @param {object} conversationResponse - The response from Watson Conversation
+     * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
      */
     handleFindDoctorByLocationMessage(conversationResponse) {
         if (! this.foursquareClient) {
             return Promise.resolve('Please configure Foursquare.');
         }
-        // 
+        // Get the specialty from the context to be used in the query to Foursquare
         let query = '';
         if (conversationResponse.context.specialty) {
             query += conversationResponse.context.specialty + ' ';
         }
         query += 'Doctor';
-        //
+        // Get the location entered by the user to be used in the query
         let location = '';
         for (let i=0; i<conversationResponse.entities.length; i++) {
             if (conversationResponse.entities[0].entity == 'sys-location') {
@@ -206,65 +207,31 @@ class HealthBot {
     }
 
     /**
-     * 
-     * @param {string} messageSender - The ID of the sender
+     * Retrieves the user doc stored in the Cloudant database associated with the current user interacting with the bot.
+     * First checks if the user is stored in Cloudant. If not, a new user is created in Cloudant.
+     * @param {string} messageSender - The User ID from the messaging platform (Slack ID, or unique ID associated with the WebSocket client) 
+     * @returns {Promise.<object|error>} - The user that was retrieved or created if fulfilled, or an error if rejected
      */
-    getOrCreateUserInMemory(messageSender) {
-        return new Promise((resolve, reject) => {
-            if (! this.userMap) {
-                this.userMap = {};
-            }
-            var user = this.userMap[messageSender];
-            if (!user) {
-                user = {
-                    _id: messageSender
-                };
-                this.userMap[messageSender] = user;
-                console.log(`Created new user with ID ${user._id}.`);
-            }
-            else {
-                console.log(`User with ID ${user._id} already exists.`);
-            }
-            resolve(user);
-        });
-    }
-
-    /**
-     * Retrieves ID of the user doc in the Cloudant database associated
-     * with the current user interacting with the bot
-     * First checks if the user is stored in Cloudant
-     * If not, creates the user in Cloudant
-     * @param {string} messageSender - The ID of the user from the messaging platform (Slack ID, or unique ID associated with the WebSocket client) 
-     */
-    getOrCreateUserInCloudant(messageSender) {
+    getOrCreateUser(messageSender) {
         return this.userStore.addUser(messageSender);
     }
 
-    getOrCreateUser(messageSender) {
-        return this.getOrCreateUserInCloudant(messageSender);
-    }
-
-    updateUserWithWatsonConversationContextInMemory(user, context) {
-        return new Promise((resolve, reject) => {
-            user.conversationContext = context;
-            resolve(user);
-        });
-    }
-
-    updateUserWithWatsonConversationContextInCloudant(user, context) {
-        return this.userStore.updateUser(user, context);
-    }
-
+    /**
+     * Updates the user doc in Cloudant with the latest Watson Conversation context.
+     * @param {object} user - The user doc associated with the active user
+     * @param {context} context - The Watson Conversation context
+     * @returns {Promise.<object|error>} - The user that was updated if fulfilled, or an error if rejected
+     */
     updateUserWithWatsonConversationContext(user, context) {
-        return this.updateUserWithWatsonConversationContextInCloudant(user, context);
+        return this.userStore.updateUser(user, context);
     }
 
     /**
      * Retrieves the ID of the active conversation doc in the Cloudant conversation log database for the current user.
      * If this is the start of a new converation then a new document is created in Cloudant,
      * and the ID of the document is associated with the Watson Conversation context.
-     * @param {string} user - The active user
-     * @param {Object} conversationResponse - The response from Watson Conversation
+     * @param {string} user - The user doc associated with the active user
+     * @param {object} conversationResponse - The response from Watson Conversation
      * @returns {Promise.<string|error>} - The ID of the active conversation doc in Cloudant if fulfilled, or an error if rejected 
      */
     getOrCreateActiveConversationId(user, conversationResponse) {
@@ -273,8 +240,8 @@ class HealthBot {
             conversationResponse.context.newConversation = false;
             return this.dialogStore.addConversation(user._id)
                 .then((conversationDoc) => {
-                    conversationResponse.context.conversationDocId = conversationDoc.id;
-                    return Promise.resolve(conversationDoc.id);
+                    conversationResponse.context.conversationDocId = conversationDoc._id;
+                    return Promise.resolve(conversationDoc._id);
                 });
         }
         else {
@@ -283,8 +250,7 @@ class HealthBot {
     }
 
     /**
-     * Logs the dialog traversed in Watson Conversation by the current user
-     * to the Cloudant log database
+     * Logs the dialog traversed in Watson Conversation by the current user to the Cloudant log database.
      * @param {string} conversationDocId - The ID of the active conversation doc in Cloudant 
      * @param {string} name - The name of the dialog (action)
      * @param {string} message - The message sent by the user
@@ -306,6 +272,9 @@ class HealthBot {
         }
     }
 
+    /**
+     * Saves any queued up dialogs.
+     */
     saveQueuedDialog() {
         let dialog = this.dialogQueue.shift();
         let dialogDoc = {name:dialog.name, message:dialog.message, reply:dialog.reply, date:dialog.date};

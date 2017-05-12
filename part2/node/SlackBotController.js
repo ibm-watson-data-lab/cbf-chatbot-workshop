@@ -4,6 +4,11 @@ const SlackBot = require('slackbots');
 
 class SlackBotController {
 
+    /**
+     * Creates a new instance of SlackBotController.
+     * @param {object} healthBot - Instance of the HealthBot
+     * @param {string} slackToken - The token for the Slackbot registered in Slack
+     */
     constructor(healthBot, slackToken) {
         this.healthBot = healthBot;
         this.slackToken = slackToken;

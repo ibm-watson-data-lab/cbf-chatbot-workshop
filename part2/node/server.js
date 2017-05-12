@@ -44,6 +44,7 @@ http.listen(appEnv.port, appEnv.bind, () => {
     // initialize the HealthBot
     healthBot.init()
         .then(() => {
+            // create an instance of the WebSocketBotController to handle WebSocket connected clients
             let webSocketBotController = new WebSocketBotController(healthBot, http);
             webSocketBotController.start();
             // if a slack token is defined then create an instance of SlackBotController

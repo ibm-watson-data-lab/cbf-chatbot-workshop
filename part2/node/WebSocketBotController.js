@@ -5,6 +5,11 @@ const WebSocketBotServer = require('./WebSocketBotServer');
 
 class WebSocketBotController {
 
+    /**
+     * Creates a new instance of WebSocketBotController.
+     * @param {object} healthBot - Instance of the HealthBot
+     * @param {object} httpServer - The httpServer to bind the WebSocketServer to
+     */
     constructor(healthBot, httpServer) {
         this.healthBot = healthBot;
         this.httpServer = httpServer;
@@ -30,8 +35,7 @@ class WebSocketBotController {
     }
 
     /**
-     * This function is called when a new message is recieved from a client
-     * connecting vie Websockets.
+     * This function is called when a new message is recieved from a client connecting via Websockets.
      * @param {object} client - Instance of WebSocketBotClient
      * @param {string} msg - The message entered by the user
      */

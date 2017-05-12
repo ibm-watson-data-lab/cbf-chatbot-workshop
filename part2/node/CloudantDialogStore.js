@@ -23,7 +23,7 @@ class CloudantDialogStore {
 
     /**
      * Creates and initializes the database.
-     * @returns {Promise.<>}
+     * @returns {Promise.<null|error>} - Null if fulfilled, or an error if rejected 
      */
     init() {
         console.log('Getting dialog database...');
@@ -64,8 +64,8 @@ class CloudantDialogStore {
 
     /**
      * Adds a new conversation to Cloudant.
-     * @param userId - The ID of the user.
-     * @returns {Promise.<TResult>}
+     * @param userId - The ID of the user
+     * @returns {Promise.<object|error>} - The conversation doc stored in Cloudant if fulfilled, or an error if rejected 
      */
     addConversation(userId) {
         var conversationDoc = {
@@ -73,20 +73,30 @@ class CloudantDialogStore {
             date: Date.now(),
             dialogs: []
         };
-        return this.db.insert(conversationDoc);
+        return this.db.insert(conversationDoc)
+            .then((body) => {
+                conversationDoc._id = body.id;
+                conversationDoc._rev = body.rev;
+                return Promise.resolve(conversationDoc);
+            });
     }
 
     /**
      * Adds a new dialog to the conversation.
      * @param conversationId - The ID of the conversation in Cloudant
      * @param dialog - The dialog to add to the conversation
-     * @returns {Promise.<TResult>}
+     * @returns {Promise.<object|error>} - The updated conversation doc stored in Cloudant if fulfilled, or an error if rejected 
      */
     addDialog(conversationId, dialog) {
         return this.db.get(conversationId)
             .then((conversationDoc) => {
                 conversationDoc.dialogs.push(dialog);
-                return this.db.insert(conversationDoc);
+                return this.db.insert(conversationDoc)
+                    .then((body) => {
+                        conversationDoc._id = body.id;
+                        conversationDoc._rev = body.rev;
+                        return Promise.resolve(conversationDoc);
+                    });
             });
     }
 }

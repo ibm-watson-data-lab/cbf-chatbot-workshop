@@ -21,7 +21,7 @@ class MyBot {
     }
 
     /**
-     * Process the message entered by the user
+     * Process the message entered by the user.
      * @param {string} message - The message entered by the user
      * @returns {Promise.<string|Error>} - The reply to be sent to the user if fulfilled, or an error if rejected
      */
@@ -30,8 +30,8 @@ class MyBot {
         // We send the conversationContext associated with the current user.
         // In this application there is only a single user, so we use the global conversationContext variable.
         // In a typical application you would associate the context with a user, and whenever
-        // a new message is received you would look up that user based on the ID from the 
-        // messaging platform (for example, the Slack ID) along with the context.
+        // a new message is received you would look up that user and their context based on the User ID
+        // from the messaging platform (for example, the Slack ID).
         let conversationResponse = null;
         return this.sendRequestToWatsonConversation(message, this.conversationContext)
             .then((response) => {
@@ -42,7 +42,7 @@ class MyBot {
                 // Update our local conversationContext every time we receive a response from Watson Conversation.
                 // This keeps track of the active dialog in the conversation.
                 this.conversationContext = conversationResponse.context;
-                // Reply to the user.
+                // Return the reply to be sent to the user.
                 return Promise.resolve(reply);
             })
             .catch((error) => {
@@ -57,7 +57,7 @@ class MyBot {
      * along with the active Watson Conversation context that is used to keep track of the conversation.
      * @param {string} message - The message entered by the user
      * @param {object} conversationContext - The active Watson Conversation context
-     * @returns {Proimse.<object|error>} - The response from Watson Conversation if fulfilled, or an error if rejected
+     * @returns {Promise.<object|error>} - The response from Watson Conversation if fulfilled, or an error if rejected
      */
     sendRequestToWatsonConversation(message, conversationContext) {
         return new Promise((resolve, reject) => {
@@ -84,7 +84,7 @@ class MyBot {
      * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
      */
     handleResponseFromWatsonConversation(conversationResponse) {
-        // In some cases we just return the response defined in Watson Conversation.
+        // In some cases we just return the response defined in Watson Conversation (handled by handleDefaultMessage).
         // In others we need to take special steps to return a customized response.
         // For example, we may need to return the results of a databse lookup or 3rd party API call.
         // Here we look to see if a custom "action" has been configured in Watson Conversation and if we
@@ -94,17 +94,17 @@ class MyBot {
              return this.handleXXXMessage(conversationResponse);
         }
         else {
-            return this.handleGenericMessage(conversationResponse);
+            return this.handleDefaultMessage(conversationResponse);
         }
     }
 
     /**
-     * Handles a generic message from Watson Conversation, one that requires no additional steps.
+     * The default handler for any message from Watson Conversation that requires no additional steps.
      * Returns the reply that was configured in the Watson Conversation dialog.
      * @param {object} conversationResponse - The response from Watson Conversation
      * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
      */
-    handleGenericMessage(conversationResponse) {
+    handleDefaultMessage(conversationResponse) {
         let reply = '';
         for (let i = 0; i < conversationResponse.output.text.length; i++) {
             reply += conversationResponse.output.text[i] + '\n';
@@ -118,8 +118,8 @@ class MyBot {
      * @returns {Promise.<string|error>} - The reply to send to the user if fulfilled, or an error if rejected
      */
     handleXXXMessage(conversationResponse) {
-        // entity = conversationResponse.entities[0].value
-        // context var = conversationResponse.context.var
+        // let entity = conversationResponse.entities[0].value
+        // let contextVar = conversationResponse.context.var
         let reply = 'TBD';
         return Promise.resolve(reply);
     }
