@@ -1,0 +1,2 @@
+python-dotenv==0.6.4
+watson-developer-cloud==0.26.0

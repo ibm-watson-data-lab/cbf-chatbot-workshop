@@ -152,7 +152,7 @@ class HealthBot():
             for entity in conversation_response['entities']:
                 if (entity['entity'] == 'sys-location'):
                     if len(location) > 0:
-                        location + location + ' '
+                        location = location + ' '
                 location = location + entity['value']
         params = {
             'query': query,
