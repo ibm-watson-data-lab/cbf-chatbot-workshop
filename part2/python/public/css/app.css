@@ -1,0 +1,55 @@
+html, body {
+	height: 100%;
+	padding: 0px;
+	margin: 0px;
+	overflow: hidden;
+}
+
+#app {
+	height: 100%;
+}
+
+.chat-outer-container {
+	height: 100%;
+	position: relative;
+}
+
+.chat-inner-container {
+	width: 100%;
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	padding: 30px;
+}
+
+#chat-message-container {
+	overflow-y: scroll;
+	margin-bottom: 10px;
+}
+
+.chat-msg-body-bot {
+	background-color: #eee;
+	color: black;
+	border-radius: 5px;
+	margin: 10px 50px 10px 0px;
+	padding: 5px 10px 5px 10px;
+}
+
+.chat-msg-body-user {
+	background-color: #34aadc;
+	color: white;
+	border-radius: 5px;
+	margin: 10px 0px 10px 50px;
+	padding: 5px 10px 5px 10px;
+}
+
+.editor-container {
+	height: 100%;
+	padding: 0px;
+	margin: 0px;
+}
+
+#editor {
+	height: 100%;
+	width: 100%;
+}

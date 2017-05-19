@@ -1,7 +1,7 @@
 {
-  "name": "cbf-nyc-chatbot-part1",
+  "name": "cbf-chatbot-workshop-part1",
   "version": "0.0.1",
-  "description": "Cognitive Builder Faire NYC Chatbot Workshop - Part 1",
+  "description": "Cognitive Builder Faire Chatbot Workshop - Part 1",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ibm-cds-labs/cbf-nyc-chatbot.git"
+    "url": "https://github.com/ibm-cds-labs/cbf-chatbot-workshop.git"
   },
   "author": "Mark Watson <markwats@us.ibm.com>",
   "license": "Apache 2.0",
   "bugs": {
-    "url": "https://github.com/ibm-cds-labs/cbf-nyc-chatbot/issues"
+    "url": "https://github.com/ibm-cds-labs/cbf-chatbot-workshop/issues"
   },
-  "homepage": "https://github.com/ibm-cds-labs/cbf-nyc-chatbot",
+  "homepage": "https://github.com/ibm-cds-labs/cbf-chatbot-workshop",
   "dependencies": {
     "dotenv": "^2.0.0",
     "prompt": "^1.0.0",

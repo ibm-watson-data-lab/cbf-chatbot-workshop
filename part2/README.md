@@ -1,7 +1,7 @@
 # Chatbots with Node.js and Watson Conversation
 ## Part 2
 
-This is part 2 of the tutorial delivered at Cognitive Builder Faire NYC.
+This is part 2 of the tutorial delivered at Cognitive Builder Faire.
 
 To run:
 

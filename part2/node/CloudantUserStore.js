@@ -77,8 +77,9 @@ class CloudantUserStore {
     }
 
     /**
-     * Adds a new user to Cloudant if a user with the specified ID does not already exist.
-     * @param userId - The ID of the user (Slack ID, or unique ID associated with the WebSocket client)
+     * Updates the user in Cloudant with the latest Watson Conversation context.
+     * @param userId - The user doc stored in Cloudant
+     * @param context - The Watson Conversation context
      * @returns {Promise.<TResult>} - The udpated user doc stored in Cloudant if fulfilled, or an error if rejected 
      */
     updateUser(user, context) {
