@@ -18,7 +18,6 @@ class HealthBot {
     constructor(userStore, dialogStore, conversationUsername, conversationPassword, conversationWorkspaceId, foursquareClientId, foursquareClientSecret) {
         this.userStore = userStore;
         this.dialogStore = dialogStore;
-        this.dialogQueue = [];
         this.conversationService = new ConversationV1({
             username: conversationUsername,
             password: conversationPassword,
@@ -113,12 +112,15 @@ class HealthBot {
         // so we can access it every time a new message is received from a user.
         return this.getOrCreateActiveConversationId(user, conversationResponse)
             .then(() => {
-                // Every dialog in our workspace has been configured with a custom "action"
-                // that is available in the Watson Conversation context.
-                // In some cases we need to take special steps and return a customized response
-                // for an action - for example, lookup and return a list of doctors (handleFindDoctorByLocationMessage). 
+                // Every dialog in our workspace has been configured with a custom "action" that is available in the Watson Conversation context.
+                // In some cases we need to take special steps and return a customized response for an action.
+                // For example, we'll lookup and return a list of doctors when the action = findDoctorByLocation (handleFindDoctorByLocationMessage). 
                 // In other cases we'll just return the response configured in the Watson Conversation dialog (handleDefaultMessage).
                 const action = conversationResponse.context.action;
+                // Variables in the context stay in there until we clear them or overwrite them, and we don't want
+                // to process the wrong action if we forget to overwrite it, so here we clear the action in the context
+                conversationResponse.context.action = null;
+                // Process the action
                 if (action == "findDoctorByLocation") {
                     return this.handleFindDoctorByLocationMessage(conversationResponse);
                 }
@@ -260,30 +262,8 @@ class HealthBot {
         if (! conversationDocId) {
             return;
         }
-        // queue up dialog to be saved asynchronously
-        this.dialogQueue.push({conversationDocId: conversationDocId, name: name, message: message, reply: reply, date: Date.now()});
-        if (this.dialogQueue.length > 1) {
-            return;
-        }
-        else {
-            setTimeout( () => {
-                this.saveQueuedDialog();
-            }, 1);
-        }
-    }
-
-    /**
-     * Saves any queued up dialogs.
-     */
-    saveQueuedDialog() {
-        let dialog = this.dialogQueue.shift();
-        let dialogDoc = {name:dialog.name, message:dialog.message, reply:dialog.reply, date:dialog.date};
-        this.dialogStore.addDialog(dialog.conversationDocId, dialogDoc)
-            .then(() => {
-                if (this.dialogQueue.length > 0) {
-                    this.saveQueuedDialog(state);
-                }
-            });
+        let dialogDoc = {name:name, message:message, reply:reply, date:Date.now()};
+        this.dialogStore.addDialog(conversationDocId, dialogDoc);
     }
 }
 

@@ -95,15 +95,18 @@ class HealthBot():
         # so we can access it every time a new message is received from a user.
         conversation_doc_id = self.get_or_create_active_conversation_id(user, conversation_response)
             
-        # Every dialog in our workspace has been configured with a custom "action"
-        # that is available in the Watson Conversation context.
-        # In some cases we need to take special steps and return a customized response
-        # for an action - for example, lookup and return a list of doctors (handleFindDoctorByLocationMessage). 
-        # In other cases we'll just return the response configured in the Watson Conversation dialog (handleDefaultMessage).
-        if 'context' in conversation_response.keys() and 'action' in conversation_response['context'].keys():
+        # Every dialog in our workspace has been configured with a custom "action" that is available in the Watson Conversation context.
+        # In some cases we need to take special steps and return a customized response for an action.
+        # For example, we'll lookup and return a list of doctors when the action = findDoctorByLocation (handle_find_doctor_by_location_message). 
+        # In other cases we'll just return the response configured in the Watson Conversation dialog (handle_default_message).
+        action = None
+        if 'action' in conversation_response['context'].keys():
             action = conversation_response['context']['action']
-        else:
-            action = None
+            # Variables in the context stay in there until we clear them or overwrite them, and we don't want
+            # to process the wrong action if we forget to overwrite it, so here we clear the action in the context
+            conversation_response['context']['action'] = None
+        
+        # Process the action
         if action == "findDoctorByLocation":
             reply = self.handle_find_doctor_by_location_message(conversation_response)
         else:
