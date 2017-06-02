@@ -1,0 +1,9 @@
+applications:
+- path: .
+  memory: 256M
+  instances: 1
+  domain: mybluemix.net
+  name: health-bot
+  host: health-bot-${random-word}
+  disk_quota: 1024M
+  command: python app.py
