@@ -23,7 +23,6 @@ class HealthBot():
         """
         self.user_store = user_store
         self.dialog_store = dialog_store
-        self.dialog_queue = {}
         self.conversation_client = ConversationV1(
             username=conversation_username,
             password=conversation_password,
