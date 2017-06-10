@@ -133,7 +133,7 @@ class HealthBot {
                 // in our Cloudant dialog database and return the reply to be sent to the user.
                 this.logDialog(
                     conversationResponse.context.conversationDocId,
-                    conversationResponse.context.action,
+                    action,
                     message,
                     reply
                 );
